@@ -2,6 +2,8 @@
 
 - Treat `docs/` as the source of truth for implementation. Start with [the documentation index](docs/index.md) and follow the requirements, technology stack, and design decisions.
 - If implementation reveals missing facts, rules, or decisions in the design, extend the relevant document in `docs/design/` as part of the change so the design describes the implemented behavior. Resolve any conflicts with documented requirements rather than silently overriding them.
+- Follow the [development guide](docs/development.md) for setup, local authentication, configuration, migrations, dependency updates, and troubleshooting.
+- Follow the [Codex workflow guide](docs/codex.md) for agent-assisted development, automatic check setup, and contract protection. Keep README.md as a teammate-facing review overview of the solution, issues, assumptions, improvements, verification, and Codex usage; keep detailed runbooks in `docs/`.
 - Use Conventional Commits for all commit messages.
 
 # Automatic Codex hooks
