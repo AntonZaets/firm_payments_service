@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from .conftest import ENDPOINT, Failure, Snapshot
 from .factories import Firm, Payload
 
-pytestmark = [pytest.mark.just_contract, pytest.mark.usefixtures("existing_records")]
+pytestmark = pytest.mark.usefixtures("existing_records")
 
 
 @pytest.mark.parametrize("table", ["payments", "firm_payments_audit"])

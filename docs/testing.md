@@ -25,13 +25,13 @@ Docker must be running and accessible. Test commands start PostgreSQL and build 
 image automatically. Coverage is enabled through pytest configuration.
 
 ```sh
-# All tests, including unfinished acceptance contracts.
+# All tests.
 make test
 
-# Only acceptance contracts.
+# Only deferred acceptance contracts, when any are marked.
 make test PYTEST_ARGS="-m just_contract"
 
-# Development checks without acceptance contracts (also used by Stop hooks).
+# Development checks, excluding any deferred acceptance contracts.
 make test PYTEST_ARGS="-m 'not just_contract'"
 
 # Pre-commit lint, formatting, typing, security, and dependency checks.
@@ -59,11 +59,12 @@ is explicitly disabled; JWT verification is outside this suite. Database trigger
 exercise payment/audit insertion failures, and independent clients synchronize
 concurrent requests with a thread barrier.
 
-The `just_contract` marker is reusable across features and excluded only from
-automatic development test runs. Keep these acceptance criteria stable: change
-contracts when requirements change or assertions are incorrect, and implement
-service behavior to satisfy them. The PDF worked example preserves its three firms
-and three payments exactly. Generated cases cover validation, precision,
+The payment acceptance contracts are green and run in the default development
+test set. The `just_contract` marker remains available only for future deferred
+acceptance contracts. Keep these acceptance criteria stable: change contracts
+when requirements change or assertions are incorrect, and implement service
+behavior to satisfy them. The PDF worked example preserves its three firms and
+three payments exactly. Generated cases cover validation, precision,
 conservation, audit, rollback, and concurrent balance updates.
 
 ## Contract test protection

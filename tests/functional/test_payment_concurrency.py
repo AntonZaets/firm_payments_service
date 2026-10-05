@@ -8,8 +8,6 @@ from sqlalchemy import Engine, text
 from .conftest import ENDPOINT, ClientFactory, SeedFirm
 from .factories import Firm, Payload, PaymentFactory, request_for
 
-pytestmark = pytest.mark.just_contract
-
 
 def concurrent_requests(
     client_factory: ClientFactory, payloads: list[Payload]

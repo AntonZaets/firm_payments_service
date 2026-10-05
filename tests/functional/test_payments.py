@@ -6,8 +6,6 @@ from .assertions import assert_success
 from .conftest import ENDPOINT, SeedFirm
 from .factories import Firm, Payload, PaymentFactory, request_for
 
-pytestmark = pytest.mark.just_contract
-
 
 def test_pdf_example(
     client: TestClient, db_engine: Engine, pdf_example: tuple[list[Firm], Payload]

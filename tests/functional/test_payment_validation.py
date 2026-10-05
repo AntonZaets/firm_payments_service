@@ -9,7 +9,7 @@ from .assertions import assert_rejected
 from .conftest import ENDPOINT, SeedFirm, Snapshot
 from .factories import Firm, Payload
 
-pytestmark = [pytest.mark.just_contract, pytest.mark.usefixtures("existing_records")]
+pytestmark = pytest.mark.usefixtures("existing_records")
 
 
 @pytest.mark.parametrize("balance", [1433, 0, -1])

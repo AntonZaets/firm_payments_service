@@ -49,7 +49,7 @@ include = ["firm_payments_service", "tests", "db_migrations"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=firm_payments_service --cov-report=term-missing"
-markers = ["just_contract: acceptance contracts excluded from automatic development hooks"]
+markers = ["just_contract: deferred acceptance contracts excluded from automatic development hooks"]
 
 [tool.deptry.per_rule_ignores]
 # Invoked as a CLI or loaded through SQLAlchemy's driver registry.
