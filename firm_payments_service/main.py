@@ -6,7 +6,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.security import APIKeyHeader
-from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -55,7 +55,12 @@ async def http_error(request: Request, exc: StarletteHTTPException) -> JSONRespo
     )
 
 
-Instrumentator().instrument(app).expose(
+# The library leaves custom_labels untyped.
+Instrumentator().add(metrics.default()).add(  # pyright: ignore[reportUnknownMemberType]
+    metrics.latency(  # pyright: ignore[reportUnknownMemberType]
+        metric_name="http_request_duration_by_status_seconds"
+    )
+).instrument(app).expose(
     app, include_in_schema=False, dependencies=[Depends(require_operational_key)]
 )
 

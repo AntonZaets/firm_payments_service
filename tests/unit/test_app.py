@@ -31,6 +31,14 @@ def test_liveness_and_metrics() -> None:
             'http_request_duration_seconds_count{handler="/health/live",method="GET"}'
             in metrics.text
         )
+        denied = client.get("/health/live", headers={"X-API-Key": "wrong"})
+        assert denied.status_code == 401
+        metrics_response = client.get("/metrics")
+        for status in ("2xx", "4xx"):
+            assert (
+                'http_request_duration_by_status_seconds_count{handler="/health/live",'
+                f'method="GET",status="{status}"}}' in metrics_response.text
+            )
         assert "/metrics" not in client.get("/openapi.json").json()["paths"]
 
 
