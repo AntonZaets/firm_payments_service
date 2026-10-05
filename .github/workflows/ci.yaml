@@ -31,8 +31,8 @@ jobs:
       - name: Start and smoke-test
         run: |
           make up
-          curl --fail http://127.0.0.1:8000/health/ready
-          curl --fail http://127.0.0.1:8000/metrics
+          curl --fail -H "X-API-Key: local-operational-key" http://127.0.0.1:8000/health/ready
+          curl --fail -H "X-API-Key: local-operational-key" http://127.0.0.1:8000/metrics
       - name: Service logs
         if: failure()
         run: docker compose logs

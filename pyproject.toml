@@ -8,6 +8,7 @@ dependencies = [
     "fastapi==0.142.2",
     "prometheus-fastapi-instrumentator==8.1.0",
     "psycopg[binary]==3.3.6",
+    "pydantic==2.13.5",
     "pydantic-settings==2.15.0",
     "python-json-logger==4.2.0",
     "sqlalchemy==2.1.3",

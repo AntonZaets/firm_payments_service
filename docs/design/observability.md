@@ -27,6 +27,7 @@ Transactional audit storage and permissions are defined in [data model](data-mod
 
 - Provide separate liveness and readiness endpoints; readiness checks database connectivity, while liveness does not depend on the database (confirmed).
 - Use `/health/live`, `/health/ready`, and `/metrics`, protected by a static API key rather than JWT authentication (confirmed). Store the key in deployment secrets; probes and metrics scrapers must supply it. This protection remains enabled even when payment JWT authentication is disabled.
+- Configure the key through required, nonempty `OPERATIONAL_API_KEY`; reject missing or empty configuration. Missing or incorrect keys return HTTP 401. Compose supplies a local-development default only.
 - Supply the static key in the `X-API-Key` header (confirmed). Never include it in URLs or logs.
 - These endpoints must not be exposed to the internet (confirmed). Restrict access through private networking and ingress rules; the API key is additional protection, not a substitute for network restrictions.
 

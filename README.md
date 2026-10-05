@@ -39,7 +39,7 @@ Git hooks; the application, checks, and tests run in containers.
 - Prometheus metrics: <http://127.0.0.1:8000/metrics>
 
 ```sh
-curl --fail http://127.0.0.1:8000/health/ready
+curl --fail -H "X-API-Key: local-operational-key" http://127.0.0.1:8000/health/ready
 ```
 
 Source changes reload the running application. Dependency or image changes need
@@ -95,7 +95,10 @@ Edit `.env` using `.env.example` as a reference. `DATABASE_URL` must use the
 `postgresql+psycopg://` scheme. For container commands its hostname is `db`.
 `LOG_LEVEL` accepts DEBUG, INFO, WARNING, ERROR, or CRITICAL. Compose enables
 reload. `APP_PORT` defaults to 8000; change it in `.env` if that port is occupied.
-Use the configured port in the URLs above. Direct execution with
+Use the configured port in the URLs above. Operational endpoints require the
+`X-API-Key` header matching `OPERATIONAL_API_KEY`. Compose supplies a local-only
+default; deployments must inject a secret key and restrict access to private
+networking. Direct execution requires a nonempty key in configuration. Direct execution with
 `uv run python -m firm_payments_service`
 defaults to reload disabled and requires a reachable PostgreSQL URL.
 

@@ -9,11 +9,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
 from firm_payments_service.logging_config import logging_config
-from firm_payments_service.main import app, engine
+from firm_payments_service.main import app, engine, settings
 
 
 def test_liveness_and_metrics() -> None:
-    with TestClient(app) as client:
+    with TestClient(
+        app, headers={"X-API-Key": settings.operational_api_key.get_secret_value()}
+    ) as client:
         response = client.get("/health/live")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
@@ -39,7 +41,9 @@ def test_readiness_failure(
         raise OperationalError(None, None, Exception("secret-password"))
 
     monkeypatch.setattr(engine, "connect", fail)
-    with TestClient(app) as client:
+    with TestClient(
+        app, headers={"X-API-Key": settings.operational_api_key.get_secret_value()}
+    ) as client:
         response = client.get("/health/ready")
         assert response.status_code == 503
         assert response.json() == {"status": "unavailable"}
@@ -64,3 +68,20 @@ def test_json_logging() -> None:
     finally:
         logging.root.handlers = previous_handlers
         logging.root.setLevel(previous_level)
+
+
+@pytest.mark.parametrize("path", ["/health/live", "/health/ready", "/metrics"])
+@pytest.mark.parametrize("headers", [{}, {"X-API-Key": "wrong-key"}])
+def test_operational_endpoints_require_key(path: str, headers: dict[str, str]) -> None:
+    with TestClient(app) as client:
+        assert client.get(path, headers=headers).status_code == 401
+
+
+def test_operational_key_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pydantic import ValidationError
+
+    from firm_payments_service.settings import Settings
+
+    monkeypatch.setenv("OPERATIONAL_API_KEY", "")
+    with pytest.raises(ValidationError):
+        Settings()

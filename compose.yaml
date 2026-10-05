@@ -17,6 +17,7 @@ services:
     build: .
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://firm_payments:local-development@db:5432/firm_payments}
+      OPERATIONAL_API_KEY: ${OPERATIONAL_API_KEY:-local-operational-key}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       RELOAD: "true"
       UV_PROJECT_ENVIRONMENT: /app/.venv
@@ -36,7 +37,7 @@ services:
       - ./:/workspace
       - pre_commit_cache:/root/.cache/pre-commit
     healthcheck:
-      test: [CMD, /app/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
+      test: [CMD, /app/.venv/bin/python, -c, "import os, urllib.request; request = urllib.request.Request('http://localhost:8000/health/ready', headers={'X-API-Key': os.environ['OPERATIONAL_API_KEY']}); urllib.request.urlopen(request, timeout=5)"]
       interval: 2s
       timeout: 6s
       retries: 30
