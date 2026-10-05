@@ -11,6 +11,7 @@ used to operate the service, along with endpoint protection and infrastructure r
 
 - Emit structured JSON logs to stdout using python-json-logger; let deployment infrastructure collect them.
 - Include a service-generated request ID, route, status, duration, and outcome. Return the request ID to the client for troubleshooting.
+- Return the generated ID in `X-Request-ID` on every response and as `request_id` in operational error bodies. Ignore caller-supplied request IDs. Log route templates rather than raw URLs or query strings; record duration in seconds and outcome as `success` or `failure`.
 - Log unexpected failures with stack traces; emit a successful-payment event only after commit.
 - Include the request ID in failure logs and error responses (confirmed). Preserve it across serialization retries so all attempts correlate with the same request.
 - Exclude credentials, request bodies, payment descriptions, and balances from logs. Stored payment rows remain the financial record.

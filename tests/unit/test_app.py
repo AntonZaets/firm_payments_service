@@ -46,7 +46,10 @@ def test_readiness_failure(
     ) as client:
         response = client.get("/health/ready")
         assert response.status_code == 503
-        assert response.json() == {"status": "unavailable"}
+        assert response.json() == {
+            "status": "unavailable",
+            "request_id": response.headers["X-Request-ID"],
+        }
         assert "secret-password" not in response.text
         assert "secret-password" not in caplog.text
 
@@ -85,3 +88,48 @@ def test_operational_key_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPERATIONAL_API_KEY", "")
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_request_correlation(caplog: pytest.LogCaptureFixture) -> None:
+    from uuid import UUID
+
+    with (
+        caplog.at_level(logging.INFO),
+        TestClient(
+            app, headers={"X-API-Key": settings.operational_api_key.get_secret_value()}
+        ) as client,
+    ):
+        response = client.get(
+            "/health/live?secret=never-log-me", headers={"X-Request-ID": "client-id"}
+        )
+        identifier = response.headers["X-Request-ID"]
+        assert str(UUID(identifier)) == identifier
+        record = next(r for r in caplog.records if r.message == "Request completed")
+        assert record.__dict__["route"] == "/health/live"
+        assert record.__dict__["status"] == 200
+        assert record.__dict__["duration"] >= 0
+        assert record.__dict__["outcome"] == "success"
+        assert "never-log-me" not in record.message
+        denied = client.get("/metrics", headers={"X-API-Key": "bad"})
+        assert denied.json()["request_id"] == denied.headers["X-Request-ID"]
+        assert denied.headers["X-Request-ID"] != identifier
+
+
+def test_unexpected_failure_is_correlated(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    def fail() -> NoReturn:
+        raise RuntimeError("unexpected failure")
+
+    monkeypatch.setattr(engine, "connect", fail)
+    with TestClient(
+        app, headers={"X-API-Key": settings.operational_api_key.get_secret_value()}
+    ) as client:
+        response = client.get("/health/ready")
+    assert response.status_code == 500
+    assert response.json()["request_id"] == response.headers["X-Request-ID"]
+    record = next(
+        r for r in caplog.records if r.message == "Unexpected request failure"
+    )
+    assert record.exc_info is not None
+    assert "unexpected failure" not in response.text
