@@ -22,6 +22,7 @@ Transactional audit storage and permissions are defined in [data model](data-mod
 
 - Expose prometheus-client metrics on an internal-only endpoint (confirmed).
 - Measure request count and latency by route and status, payment-batch outcomes, and database transaction failures (confirmed).
+- Expose `payment_batch_size` as a histogram of payment entries per schema-valid bulk request, observed once before transfer regardless of its outcome; serialization retries do not add observations. Invalid request bodies are excluded. Bucket boundaries are 1, 5, 10, 25, 50, 100, 250, 500, and 1000 entries, plus infinity for larger configured limits; no labels are used.
 - Keep metric labels bounded; never label by firm UUID, request ID, or payment description (confirmed).
 
 ## Health endpoints and access protection

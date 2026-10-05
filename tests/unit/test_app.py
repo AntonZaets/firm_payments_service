@@ -3,15 +3,59 @@ import logging
 from io import StringIO
 from logging.config import dictConfig
 from typing import NoReturn
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
+from prometheus_client import REGISTRY
 from sqlalchemy.exc import OperationalError
+from starlette.requests import Request
 
+from firm_payments_service.api import routes
 from firm_payments_service.auth import settings
 from firm_payments_service.db.session import engine
 from firm_payments_service.main import app
 from firm_payments_service.observability.logging import logging_config
+
+
+@pytest.mark.parametrize("outcome", ["accepted", "failed", "invalid"])
+def test_payment_batch_size(monkeypatch: pytest.MonkeyPatch, outcome: str) -> None:
+    body = {
+        "payer_firm_uuid": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "payments": [
+            {
+                "payee_firm_uuid": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+                "amount": "1",
+                "description": "invoice",
+            }
+        ]
+        * 3,
+    }
+    if outcome == "invalid":
+        body["payments"] = []
+    transfer = Mock(
+        side_effect=OperationalError(None, None, Exception())
+        if outcome == "failed"
+        else None
+    )
+    monkeypatch.setattr(routes, "transfer", transfer)
+    before = {
+        name: REGISTRY.get_sample_value(f"payment_batch_size_{name}")
+        for name in ("count", "sum")
+    }
+    request = Request({"type": "http", "state": {"request_id": "test-request"}})
+    response = routes.bulk_payment(request, (body, body))
+    assert (
+        response.status_code
+        == {"accepted": 201, "failed": 500, "invalid": 422}[outcome]
+    )
+    for name, increment in (("count", 1), ("sum", 3)):
+        previous = before[name]
+        assert previous is not None
+        assert REGISTRY.get_sample_value(f"payment_batch_size_{name}") == previous + (
+            0 if outcome == "invalid" else increment
+        )
+    assert transfer.call_count == (0 if outcome == "invalid" else 1)
 
 
 def test_liveness_and_metrics() -> None:

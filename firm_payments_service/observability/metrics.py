@@ -1,5 +1,5 @@
 from fastapi import Depends, FastAPI
-from prometheus_client import Counter
+from prometheus_client import Counter, Histogram
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
 from firm_payments_service.auth import require_operational_key
@@ -8,6 +8,11 @@ payment_batches = Counter(
     "payment_batches_total",
     "Bulk payment requests by outcome.",
     ("outcome",),
+)
+payment_batch_size = Histogram(
+    "payment_batch_size",
+    "Number of payments per schema-valid bulk request, observed before transfer.",
+    buckets=(1, 5, 10, 25, 50, 100, 250, 500, 1_000),
 )
 payment_transaction_failures = Counter(
     "payment_transaction_failures_total",

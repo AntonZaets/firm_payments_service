@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse
 from firm_payments_service.api.schemas import Error, InvalidRequest, validate_request
 from firm_payments_service.config import Settings
 from firm_payments_service.observability.metrics import (
+    payment_batch_size,
     record_payment_batch,
     record_payment_transaction_failure,
 )
@@ -48,6 +49,7 @@ def bulk_payment(
         payment = validate_request(value, settings)
         if raw is None:
             raise RuntimeError("validated request body is not an object")
+        payment_batch_size.observe(len(payment.payments))
         transfer(payment, raw, request.state.request_id, settings)
     except InvalidRequest as error:
         return _errors(request.state.request_id, error.errors)
