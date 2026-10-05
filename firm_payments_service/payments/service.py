@@ -66,15 +66,6 @@ def _attempt(
                         )
                     ]
                 )
-            if any(
-                type(balance) is not int
-                for values in resolved.values()
-                for _, balance in values
-            ):
-                raise InvalidRequest(
-                    [Error("INVALID_FIELD", "A stored firm balance is invalid.")]
-                )
-
             ids = {uuid: values[0][0] for uuid, values in resolved.items()}
             balances = {values[0][0]: values[0][1] for values in resolved.values()}
             payer_id = ids[request.payer_firm_uuid]

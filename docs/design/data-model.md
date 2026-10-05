@@ -14,8 +14,8 @@ represents money, and defines the service-owned audit schema and permissions.
 - Preserve one payment row per input entry, including repeated recipients and their separate descriptions.
 - Resolve public UUIDs to internal IDs before inserting payments.
 - Store and calculate money as integer cents. Validate the dollar-string format before exact conversion; never use floating point.
-- The requirements do not specify existing database constraints or establish permission to alter platform tables. Database-enforced primary keys, unique firm UUIDs, foreign keys, positive payment amounts, and appropriate balance constraints are best practice, but the service must not assume they exist or introduce platform schema changes without platform approval (confirmed).
-- Validate monetary values against the actual database integer ranges. The platform's negative-balance policy is unknown; service behavior for payer and recipient balances is defined in [architecture](architecture.md#payment-transaction).
+- Stored platform data is valid: `balance_cents` contains nonnegative integers, never null (confirmed). Trust this guarantee without revalidating stored balances or adding platform constraints. Specific database constraints remain unspecified; do not introduce platform schema changes without platform approval.
+- Validate incoming monetary values and calculated balances against the actual database integer ranges. Funds validation and credits preserve nonnegative balances; see [architecture](architecture.md#payment-transaction).
 - Transaction-level validation, firm resolution, and balance updates are defined in [architecture](architecture.md#payment-transaction). Client submission and idempotency behavior are defined in [API](api.md#payment-endpoint).
 
 ## Audit table

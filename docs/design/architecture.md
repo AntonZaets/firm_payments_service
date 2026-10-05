@@ -64,9 +64,9 @@ and mappings in `db`, platform security in `auth`, and logging and metrics in
 
 1. Use one PostgreSQL transaction per bulk request at SERIALIZABLE isolation, set before any transaction queries execute.
 2. Resolve all payer and recipient UUIDs and read their balances within the transaction. Each supplied UUID must resolve to exactly one firm with an internal ID; reject missing or ambiguous mappings rather than choosing an arbitrary row.
-3. Validate stored balance integer types, positive payment amounts, batch totals, and resulting balances against the actual database integer ranges. Platform constraints are unspecified, so correctness relies on these checks; see [data model](data-model.md).
-4. Require `balance_cents >= total_cents` for the payer, including equality. Resolve payer existence independently of funds: do not filter lookup by `balance_cents > 0`. A zero or negative payer balance yields insufficient funds for a positive batch; a successful debit cannot leave the payer negative.
-5. Allow recipients' existing and resulting balances to be negative. Validate their integer types and ranges without imposing nonnegativity.
+3. Trust stored balances as valid, nonnegative integer cents; do not revalidate stored data. Validate positive payment amounts, batch totals, and resulting balances against the actual database integer ranges; see [data model](data-model.md).
+4. Require `balance_cents >= total_cents` for the payer, including equality. Resolve payer existence independently of funds: do not filter lookup by `balance_cents > 0`. A zero payer balance yields insufficient funds for a positive batch; a successful debit cannot leave the payer negative.
+5. Credit recipients by their payment totals. Existing balances are nonnegative by the platform guarantee; check calculated balances for overflow before writing.
 6. Aggregate credits per recipient for balance updates, while inserting one payment row per input entry, including repeated recipients and their separate descriptions. Apply debit and credits in ascending internal firm-ID order to reduce deadlock risk.
 7. Insert one audit row per successful bulk request through the repository in the same transaction as payments and balance updates. The [data model](data-model.md#audit-table) defines the audit schema.
 8. Commit before returning success. Roll back the entire transaction on any failure, including audit insertion failure; rejected or rolled-back transfers leave no balance changes, payment rows, or audit row.
