@@ -9,7 +9,8 @@ Keep monetary expectations explicit in integer cents rather than reusing applica
 conversion logic. Parameterize related success and failure cases to avoid duplication.
 
 - `tests/unit/` contains isolated application checks without requiring payment data.
-- `tests/integration/` verifies production audit migrations against disposable PostgreSQL.
+- `tests/integration/` verifies production audit migrations and local database
+  initialization, PDF sample assets, and restart preservation against disposable PostgreSQL.
 - `tests/functional/` contains database readiness and fixture checks, plus payment
   acceptance contracts for the PDF example, success, validation, rollback, and concurrency.
 - `tests/functional/conftest.py` owns shared fixtures; `factories.py` supplies data

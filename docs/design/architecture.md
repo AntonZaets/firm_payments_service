@@ -98,3 +98,26 @@ and mappings in `db`, platform security in `auth`, and logging and metrics in
 ## Requirements
 
 FR-01–FR-07, NFR-01–NFR-04.
+
+## Local development startup
+
+Compose initializes a local stand-in for the platform database through a one-shot
+`db-init` service after PostgreSQL is healthy. The app waits for successful
+initialization and Dex readiness, runs `alembic upgrade head`, then starts Uvicorn.
+An initialization or migration failure prevents app startup. This orchestration
+is local only; the production image command does not initialize platform data or
+run migrations automatically.
+
+`make up` also starts pgAdmin on loopback port 5050 (`PGADMIN_PORT` overrides it).
+Its configuration persists in a separate volume, with a preloaded connection to
+the default Compose database. Login credentials are local defaults configurable
+through `PGADMIN_DEFAULT_EMAIL` and `PGADMIN_DEFAULT_PASSWORD`; the database
+connection prompts for the PostgreSQL password. If the database name or user is
+customized, update the preloaded connection in pgAdmin. PostgreSQL stays internal.
+
+`make sample` runs the standard-library Python request script inside the app
+container. It obtains a fresh Dex ID token for the existing payer user and
+submits the PDF worked example from `local/payment.json`. It prints HTTP status
+and response and exits nonzero on request errors or an unexpected success status.
+Payments are sent only by this explicit command, never by startup. Repeated
+submissions follow the existing API policy and perform additional transfers.

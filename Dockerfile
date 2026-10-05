@@ -11,6 +11,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked
 COPY firm_payments_service ./firm_payments_service
 COPY tests ./tests
+COPY local ./local
 COPY db_migrations ./db_migrations
 COPY alembic.ini ./
 CMD ["uv", "run", "--locked", "python", "-m", "firm_payments_service"]

@@ -23,9 +23,8 @@ and development dependencies are pinned in `pyproject.toml` and `uv.lock`.
 
 ```sh
 make setup
-make build
-make migrate
 make up
+make sample
 ```
 
 `make setup` uses managed Python, creates the host `.venv`, installs Git
@@ -34,6 +33,7 @@ Build and startup also
 work without setup, using Compose's local defaults. The host environment is for
 Git hooks, checks, and formatting; the application and tests run in containers.
 
+- pgAdmin: <http://127.0.0.1:5050> (login `admin@example.com` / `local-development`)
 - API documentation: <http://127.0.0.1:8000/docs>
 - Liveness: <http://127.0.0.1:8000/health/live>
 - Readiness (checks PostgreSQL): <http://127.0.0.1:8000/health/ready>
@@ -55,7 +55,40 @@ Compose starts Dex with two local users, both with password `password`:
 | `payer@example.test` | `3f1c9a2e-7b4d-4c1e-9a55-2d8e6f0b7c41` |
 | `other@example.test` | `8b2e4c71-0d3a-4f6e-b1c9-5a7d2e9f4c10` |
 
-Obtain a token and submit a payment request (the platform firms must already exist):
+`make up` initializes local platform tables, seeds the PDF's three firms when
+`firms` is empty, and applies service audit migrations before starting the API.
+Existing firms, balances, payments, and audit records survive subsequent starts.
+
+Run `make sample` to obtain a fresh Dex token and submit `local/payment.json`,
+the PDF's three-payment worked example. The script prints the HTTP status and
+response; the first run returns **201** with three payments and one audit row.
+It runs in the app container, so a custom `APP_PORT` needs no script changes.
+Repeated submissions transfer the money again; startup never sends payments.
+
+In pgAdmin, open **Local development → Local Firm Payments** and enter the
+PostgreSQL password (`local-development` by default). Inspect `public.firms`,
+`public.payments`, and `firm_payments_service.firm_payments_audit`. After one
+sample request on a fresh database, balances in cents are:
+
+| Firm | Initial balance | Balance after sample |
+| --- | ---: | ---: |
+| Pinecrest CPA Group | 5000000 | 3674875 |
+| Lopez Bookkeeping | 50000 | 170075 |
+| Nair Tax Services | 200000 | 1405050 |
+
+`PGADMIN_PORT`, `PGADMIN_DEFAULT_EMAIL`, and `PGADMIN_DEFAULT_PASSWORD` configure
+pgAdmin. Login credentials initialize its configuration volume only once.
+The preloaded connection uses the default database name and user; if you change
+`POSTGRES_DB` or `POSTGRES_USER`, edit its connection properties in pgAdmin.
+PostgreSQL remains accessible only inside Compose.
+
+The script can also run on the host with Python 3:
+
+```sh
+python3 local/request-example.py --api-url http://localhost:8000
+```
+
+For other requests, obtain a token and submit your own JSON:
 
 ```sh
 TOKEN=$(curl --fail --silent \
@@ -91,9 +124,10 @@ payment authentication and authorization; it does not disable operational keys.
 | `make help` | List commands |
 | `make setup` | Sync locked host dependencies and install Git hooks |
 | `make build` | Build the development container |
-| `make up` | Build and start services; wait for readiness |
+| `make up` | Build and start services; initialize local data and wait for readiness |
 | `make down` | Stop services, preserving the database volume |
 | `make logs` | Follow service logs; Ctrl-C stops following |
+| `make sample` | Submit the authenticated PDF payment example |
 | `make test` | Start PostgreSQL and Dex and run pytest with coverage |
 | `make check` | Run every pre-commit hook against all tracked files on the host |
 | `make format` | Apply Ruff fixes and formatting on the host |
@@ -151,8 +185,8 @@ the initialization credentials only when its data volume is empty; changing
 Alembic is wired to the shared settings and SQLAlchemy metadata for
 service-owned tables. Migrations create the `firm_payments_service` PostgreSQL
 schema and move the audit table to `firm_payments_service.firm_payments_audit`,
-preserving existing rows and grants. Apply `make migrate` before starting the
-updated service. The migration role owns the schema; the runtime role needs USAGE
+preserving existing rows and grants. Compose applies migrations automatically before starting the app;
+`make migrate` remains available for explicit migration execution. The migration role owns the schema; the runtime role needs USAGE
 on it and only INSERT and SELECT on the audit table. Autogeneration is limited to
 registered service tables; the existing Alembic version table stays in the default
 schema. The platform owns `firms` and `payments`, so this service does not migrate
@@ -164,7 +198,8 @@ make migration MESSAGE="create audit table"
 make migrate
 ```
 
-`make down` preserves data. To deliberately erase **all local database data**:
+`make down` preserves data. To deliberately erase **all local database data and pgAdmin settings** and
+restore the PDF starting balances on the next `make up`:
 
 ```sh
 docker compose down --volumes

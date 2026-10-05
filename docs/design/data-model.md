@@ -63,3 +63,18 @@ See [platform constraints, indexes, and schema changes](assumptions.md#platform-
 ## Requirements
 
 FR-02–FR-03, FR-06–FR-07, NFR-03–NFR-04.
+
+## Local platform fixture
+
+`local/bootstrap.sql` creates local-only `firms` and `payments` stand-ins if they
+are absent, using INTEGER identity primary keys, INTEGER monetary and firm-ID
+columns, and non-null TEXT names, UUIDs, and descriptions. This is not a platform
+schema migration; production Alembic ownership remains limited to service tables.
+
+In one transaction, bootstrap seeds firms only when `firms` is empty, using the
+PDF worked example exactly: Pinecrest CPA Group (ID 1, 5000000 cents), Lopez
+Bookkeeping (ID 2, 50000 cents), and Nair Tax Services (ID 3, 200000 cents), with
+their requirement UUIDs. The firm identity sequence advances past the seeded IDs.
+Nonempty firm tables, existing balances, payments, and audit records are preserved.
+Startup applies the existing audit migrations separately. To restore the initial
+example deliberately, remove the local Compose volumes and start again.
