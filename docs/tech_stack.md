@@ -15,7 +15,7 @@
 
 ## development
 
-- testing: pytest, pytest-cov
+- testing: pytest, pytest-cov, Polyfactory for test data factories
 - linting: ruff, pyright
 - other dev tools: pre-commit, bandit, deptry
 - deployment: docker compose, Makefile
