@@ -28,10 +28,10 @@ def test_insufficient_funds(
         )
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=payload),
-        before,
-        database_snapshot(),
-        "INSUFFICIENT_FUNDS",
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code="INSUFFICIENT_FUNDS",
     )
 
 
@@ -49,7 +49,10 @@ def test_unknown_firm(
         payload["payments"][1]["payee_firm_uuid"] = str(uuid4())
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=payload), before, database_snapshot(), "UNKNOWN_FIRM"
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code="UNKNOWN_FIRM",
     )
 
 
@@ -65,7 +68,10 @@ def test_ambiguous_firm(
     firm_factory(uuid=firms[index].uuid)
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=payload), before, database_snapshot(), None
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code=None,
     )
 
 
@@ -85,7 +91,10 @@ def test_invalid_amount(
     # Wrong JSON types are schema errors; invalid strings are amount errors.
     code = "INVALID_AMOUNT" if isinstance(amount, str) else "INVALID_FIELD"
     assert_rejected(
-        client.post(ENDPOINT, json=payload), before, database_snapshot(), code
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code=code,
     )
 
 
@@ -126,7 +135,10 @@ def test_validation_rules(
         payment["description"] = "x" * 1001
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=payload), before, database_snapshot(), code
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code=code,
     )
 
 
@@ -151,10 +163,10 @@ def test_required_fields(
         target[field] = {} if field == "payments" else []
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=payload),
-        before,
-        database_snapshot(),
-        "INVALID_FIELD",
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code="INVALID_FIELD",
     )
 
 
@@ -168,7 +180,10 @@ def test_wrong_body_or_entry_type(
 ) -> None:
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=body), before, database_snapshot(), "INVALID_FIELD"
+        response=client.post(ENDPOINT, json=body),
+        before=before,
+        after=database_snapshot(),
+        code="INVALID_FIELD",
     )
 
 
@@ -177,7 +192,12 @@ def test_malformed_json(client: TestClient, database_snapshot: Snapshot) -> None
     response = client.post(
         ENDPOINT, content="{", headers={"Content-Type": "application/json"}
     )
-    assert_rejected(response, before, database_snapshot(), "INVALID_JSON")
+    assert_rejected(
+        response=response,
+        before=before,
+        after=database_snapshot(),
+        code="INVALID_JSON",
+    )
 
 
 @pytest.mark.parametrize("case", ["payment", "total", "recipient"])
@@ -202,7 +222,10 @@ def test_integer_overflow(
             )
     before = database_snapshot()
     assert_rejected(
-        client.post(ENDPOINT, json=payload), before, database_snapshot(), None
+        response=client.post(ENDPOINT, json=payload),
+        before=before,
+        after=database_snapshot(),
+        code=None,
     )
 
 
@@ -216,7 +239,12 @@ def test_multiple_errors(
     payload["payments"][1]["payee_firm_uuid"] = "bad"
     before = database_snapshot()
     response = client.post(ENDPOINT, json=payload)
-    assert_rejected(response, before, database_snapshot(), None)
+    assert_rejected(
+        response=response,
+        before=before,
+        after=database_snapshot(),
+        code=None,
+    )
     assert {"INVALID_AMOUNT", "INVALID_UUID"} <= {
         error["code"] for error in response.json()["errors"]
     }

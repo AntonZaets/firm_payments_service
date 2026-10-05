@@ -8,13 +8,13 @@ from .factories import Firm, Payload
 
 
 def assert_success(
+    *,
     response: Response,
     engine: Engine,
     firms: list[Firm],
     payload: Payload,
     balances: list[int],
     cents: list[int],
-    *,
     submissions: int = 1,
 ) -> None:
     assert response.status_code == 201, response.text
@@ -67,6 +67,7 @@ def assert_success(
 
 
 def assert_rejected(
+    *,
     response: Response,
     before: dict[str, list[tuple[Any, ...]]],
     after: dict[str, list[tuple[Any, ...]]],
