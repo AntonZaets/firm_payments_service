@@ -120,3 +120,15 @@ each turn finishes. Human review remains part of accepting the changes.
 
 The [Codex workflow guide](docs/codex.md) explains the approach, automatic checks,
 hook setup, and contract-edit approval rules.
+
+
+## Feedback
+
+### How much time did you spend on this task?
+
+8 hours
+
+
+### How proud are you of your work?
+
+Good enough
