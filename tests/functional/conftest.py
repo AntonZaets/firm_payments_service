@@ -26,7 +26,11 @@ ENDPOINT = "/api/v1/payments/bulk"
 def db_engine() -> Iterator[Engine]:
     admin = create_engine(Settings().database_url, isolation_level="AUTOCOMMIT")
     name = f"payment_tests_{uuid4().hex}"
-    engine = create_engine(admin.url.set(database=name), pool_size=10)
+    engine = create_engine(
+        admin.url.set(database=name),
+        pool_size=10,
+        connect_args={"options": "-csearch_path=public,firm_payments_service"},
+    )
     created = False
     try:
         with admin.connect() as connection:
@@ -46,7 +50,8 @@ def db_engine() -> Iterator[Engine]:
                     payee_firm_id INTEGER NOT NULL,
                     amount_cents INTEGER NOT NULL, description TEXT NOT NULL
                 );
-                CREATE TABLE firm_payments_audit (
+                CREATE SCHEMA firm_payments_service;
+                CREATE TABLE firm_payments_service.firm_payments_audit (
                     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     request_id UUID NOT NULL, raw_request JSON NOT NULL

@@ -21,8 +21,12 @@ represents money, and defines the service-owned audit schema and permissions.
 ## Audit table
 
 Maintain an additional service-owned, append-only table for data updates
-(confirmed). The table is named `firm_payments_audit` (confirmed), with these
-confirmed columns:
+(confirmed). The table is named `firm_payments_audit` (confirmed). It resides in the dedicated PostgreSQL schema
+`firm_payments_service`, so its qualified name is
+`firm_payments_service.firm_payments_audit`. Audit queries explicitly qualify the
+schema; platform table queries retain their existing search-path resolution.
+
+Confirmed columns:
 
 | Column | PostgreSQL type | Purpose |
 | --- | --- | --- |
@@ -36,7 +40,19 @@ Audit insertion and rollback behavior are defined in the
 
 Never update or delete audit rows. Confirmed enforcement: give the runtime role
 INSERT and SELECT permissions only on the audit table; use a separate migration
-role for ownership and schema changes. Alembic manages only service-owned schema.
+role for ownership and schema changes. The runtime role also needs USAGE on
+`firm_payments_service`; it must not have CREATE on that schema. The migration
+role creates and owns the schema and needs permission to move the existing audit
+table. PostgreSQL `ALTER TABLE ... SET SCHEMA` preserves audit rows, indexes,
+identity sequence, ownership, and table grants. Apply the migration before running
+the updated service; downgrade moves the table back without deleting audit rows
+and drops the empty service schema without CASCADE.
+
+Alembic manages only service-owned tables. Autogeneration reflects only registered
+tables in `firm_payments_service`, excluding platform tables and other schemas.
+The existing Alembic version table stays in the default schema to preserve
+migration history.
+
 The audit body contains payment descriptions and amounts, so restrict access;
 do not include authorization headers or credentials.
 

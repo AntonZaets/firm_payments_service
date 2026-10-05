@@ -53,7 +53,8 @@ def insert_audit(
 ) -> None:
     session.execute(
         text(
-            "INSERT INTO firm_payments_audit (request_id, raw_request) "
+            "INSERT INTO firm_payments_service.firm_payments_audit "
+            "(request_id, raw_request) "
             "VALUES (:request_id, CAST(:raw_request AS JSON))"
         ),
         {

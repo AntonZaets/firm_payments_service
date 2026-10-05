@@ -11,4 +11,5 @@ firm_payments_audit = Table(
     ),
     Column("request_id", Uuid(as_uuid=True), nullable=False),
     Column("raw_request", JSON, nullable=False),
+    schema="firm_payments_service",
 )

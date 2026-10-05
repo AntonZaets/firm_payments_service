@@ -112,9 +112,14 @@ the initialization credentials only when its data volume is empty; changing
 `.env` does not change an existing database user's password.
 
 Alembic is wired to the shared settings and SQLAlchemy metadata for
-service-owned tables. Migrations create `firm_payments_audit`; the platform
-owns `firms` and `payments`, so this service does not migrate them. When adding
-service-owned models, register their tables in the metadata used by the migration
+service-owned tables. Migrations create the `firm_payments_service` PostgreSQL
+schema and move the audit table to `firm_payments_service.firm_payments_audit`,
+preserving existing rows and grants. Apply `make migrate` before starting the
+updated service. The migration role owns the schema; the runtime role needs USAGE
+on it and only INSERT and SELECT on the audit table. Autogeneration is limited to
+registered service tables; the existing Alembic version table stays in the default
+schema. The platform owns `firms` and `payments`, so this service does not migrate
+them. When adding service-owned models, register their tables in the metadata used by the migration
 environment, generate a revision, review it, and apply it:
 
 ```sh

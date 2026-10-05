@@ -9,6 +9,7 @@ Keep monetary expectations explicit in integer cents rather than reusing applica
 conversion logic. Parameterize related success and failure cases to avoid duplication.
 
 - `tests/unit/` contains isolated application checks without requiring payment data.
+- `tests/integration/` verifies production audit migrations against disposable PostgreSQL.
 - `tests/functional/` contains database readiness and fixture checks, plus payment
   acceptance contracts for the PDF example, success, validation, rollback, and concurrency.
 - `tests/functional/conftest.py` owns shared fixtures; `factories.py` supplies data
@@ -46,8 +47,13 @@ their failures show regressions against the documented behavior.
 
 Payment contract tests use real PostgreSQL in a uniquely named disposable database
 on the configured server. The test owner needs CREATE DATABASE permission. Test-owned
-`firms`, `payments`, and `firm_payments_audit` tables mirror the documented schema;
-this harness does not validate production migrations. Platform money columns use
+`firms`, `payments`, and `firm_payments_service.firm_payments_audit` tables mirror
+the documented schema. Test connections use `public,firm_payments_service` as their search path so
+existing unqualified audit inspection and failure triggers resolve the service
+table. This harness does not validate production migrations. The separate
+migration test checks fresh installation, existing-row preservation, identity
+sequence continuity, downgrade/re-upgrade, and autogeneration exclusion of
+platform tables and unrelated schemas. Platform money columns use
 PostgreSQL INTEGER ranges. UUID uniqueness and other unspecified platform constraints
 are intentionally absent, allowing tests of ambiguous UUID mappings.
 
