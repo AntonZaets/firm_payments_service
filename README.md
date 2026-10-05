@@ -73,6 +73,19 @@ checks for whitespace, file endings, YAML/TOML syntax, merge conflicts, private
 keys, and large files. New files must be added to Git for pre-commit to inspect
 them. Host hooks use the same locked dependencies as the container.
 
+### Codex hooks
+
+The repo's `.codex/hooks.json` runs `make check` after `apply_patch` edits and
+before Codex finishes each turn (`Stop`), covering shell-based edits at turn end.
+Checks run synchronously; failures return feedback so Codex can fix them and
+rerun checks. Ruff and whitespace hooks can modify files themselves.
+
+Restart Codex after installing this configuration, trust the project, and use
+`/hooks` to review and trust the repo hooks. Docker must be running and accessible
+to Codex. These checks use the same container workflow as `make check`; new files
+still need to be added to Git to be included. Read-only turns also run the final
+check.
+
 GitHub Actions builds the image, runs checks and tests, applies migrations twice,
 and smoke-tests the running application on pushes and pull requests.
 
