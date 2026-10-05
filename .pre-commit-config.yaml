@@ -1,0 +1,41 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff lint
+        entry: uv run --locked ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: Ruff format
+        entry: uv run --locked ruff format
+        language: system
+        types: [python]
+      - id: pyright
+        name: Pyright
+        entry: uv run --locked pyright
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: bandit
+        name: Bandit
+        entry: uv run --locked bandit -q -r firm_payments_service db_migrations
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: deptry
+        name: Dependency checks
+        entry: uv run --locked deptry . --extend-exclude venv
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -1,1 +1,20 @@
-FROM python:3.14-alpine
+FROM ghcr.io/astral-sh/uv:0.12.23 AS uv
+FROM python:3.14.8-slim
+
+COPY --from=uv /uv /uvx /usr/local/bin/
+ENV UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/* \
+    && git config --global --add safe.directory /workspace
+COPY firm_payments_service ./firm_payments_service
+COPY tests ./tests
+COPY db_migrations ./db_migrations
+COPY alembic.ini .pre-commit-config.yaml ./
+CMD ["uv", "run", "--locked", "python", "-m", "firm_payments_service"]

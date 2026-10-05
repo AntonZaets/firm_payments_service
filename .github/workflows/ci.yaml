@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: "0.12.23"
+          python-version: "3.14.8"
+      - name: Verify lock and install hooks
+        run: make setup
+      - name: Build
+        run: make build
+      - name: Checks
+        run: make check
+      - name: Tests
+        run: make test
+      - name: Migrations
+        run: |
+          make migrate
+          make migrate
+      - name: Start and smoke-test
+        run: |
+          make up
+          curl --fail http://127.0.0.1:8000/health/ready
+          curl --fail http://127.0.0.1:8000/metrics
+      - name: Service logs
+        if: failure()
+        run: docker compose logs
+      - name: Stop services
+        if: always()
+        run: make down

@@ -26,7 +26,7 @@ outside this document's scope.
 - **FR-06 — Repeated recipients:** Support multiple entries for the same
   recipient within a request. Preserve their separate amounts and descriptions
   as individual payment records and credit the recipient by their sum.
-- **FR-07 — Persistence:** Use the specified relational data model of the **platform** 
+- **FR-07 — Persistence:** Use the specified relational data model of the **platform**
   database with which service should be integrated (see the table descriptions below).
 
 ## Request format

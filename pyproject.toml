@@ -1,0 +1,51 @@
+[project]
+name = "firm-payments-service"
+version = "0.1.0"
+description = "Service for transfers between firms' platform balances"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "alembic==1.20.0",
+    "fastapi==0.142.2",
+    "prometheus-client==0.26.0",
+    "psycopg[binary]==3.3.6",
+    "pydantic-settings==2.15.0",
+    "python-json-logger==4.2.0",
+    "sqlalchemy==2.1.3",
+    "uvicorn==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "bandit==1.9.4",
+    "deptry==0.25.1",
+    "httpx2==2.13.1",
+    "pre-commit==4.6.2",
+    "pyright[nodejs]==1.1.414",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "ruff==0.16.10",
+]
+
+[tool.uv]
+package = false
+required-version = ">=0.12.23"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+include = ["firm_payments_service", "tests", "db_migrations"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=firm_payments_service --cov-report=term-missing"
+
+[tool.deptry.per_rule_ignores]
+# Invoked as a CLI or loaded through SQLAlchemy's driver registry.
+DEP002 = ["alembic", "psycopg"]
