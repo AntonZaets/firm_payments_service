@@ -43,4 +43,5 @@ validated with their owners; see [assumptions](assumptions.md).
 
 ## Requirements
 
-Supports investigation and operation of FR-05, NFR-01–NFR-02, and NFR-05.
+Supports investigation and operation of FR-05 and NFR-01–NFR-02. Endpoint
+access protection is a design decision, not a requirement from the task.

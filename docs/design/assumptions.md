@@ -24,7 +24,7 @@ Source: user-supplied capacity-planning assumptions; these are estimates, not ve
 
 ## Authentication and authorization
 
-- The initial task did not explicitly specify authentication or authorization mechanisms. NFR-05 requires unauthorized access to be denied; assume both are necessary for payment requests.
+- The initial task did not specify authentication or authorization requirements. Assume both are necessary for payment requests; this is a design assumption, not a requirement from the task.
 - Authentication could be handled by deployment infrastructure or an API gateway. Authorization remains a service responsibility: the service must verify that the authenticated caller is permitted to pay from the requested payer firm, rather than treating authentication alone as permission to transfer funds.
 - The current design performs JWT verification and payer authorization in the service. Infrastructure-level authentication would require a trusted caller identity to reach the service and would not replace payer authorization. See [authentication and authorization](authentication_and_authorization.md) for the current rules and the explicit `AUTH_ENABLED` opt-out, which disables both checks.
 

@@ -109,4 +109,5 @@ Confirmed error set:
 
 ## Requirements
 
-FR-01–FR-06, NFR-01–NFR-05.
+FR-01–FR-06, NFR-01–NFR-04. Authentication and authorization are based on a
+[design assumption](assumptions.md#authentication-and-authorization).

@@ -27,7 +27,8 @@ including JWT validation, the authentication opt-out, and operational endpoint p
 - Configure the public-key fetch timeout through `AUTH_JWKS_TIMEOUT_SECONDS`, defaulting to 30 seconds (confirmed).
 - Use an established JWT verification library rather than implementing cryptography.
 
-## Requirements
+## Basis
 
-NFR-05 applies when authentication is enabled. The configurable opt-out is an
-explicit scope clarification agreed during design review.
+Authentication and authorization originate from a [design assumption](assumptions.md#authentication-and-authorization),
+not from the task's requirements. The rules above and configurable opt-out are
+design decisions agreed during design review.
