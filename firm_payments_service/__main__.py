@@ -1,7 +1,7 @@
 import uvicorn
 
-from firm_payments_service.logging_config import logging_config
-from firm_payments_service.settings import Settings
+from firm_payments_service.config import Settings
+from firm_payments_service.observability.logging import logging_config
 
 if __name__ == "__main__":
     settings = Settings()

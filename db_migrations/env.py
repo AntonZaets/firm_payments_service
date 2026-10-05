@@ -1,7 +1,7 @@
 from alembic import context
 
-from firm_payments_service.database import make_engine, metadata
-from firm_payments_service.settings import Settings
+from firm_payments_service.config import Settings
+from firm_payments_service.db.session import make_engine, metadata
 
 settings = Settings()
 

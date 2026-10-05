@@ -8,8 +8,10 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
-from firm_payments_service.logging_config import logging_config
-from firm_payments_service.main import app, engine, settings
+from firm_payments_service.auth import settings
+from firm_payments_service.db.session import engine
+from firm_payments_service.main import app
+from firm_payments_service.observability.logging import logging_config
 
 
 def test_liveness_and_metrics() -> None:
@@ -91,7 +93,7 @@ def test_operational_endpoints_require_key(path: str, headers: dict[str, str]) -
 def test_operational_key_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
     from pydantic import ValidationError
 
-    from firm_payments_service.settings import Settings
+    from firm_payments_service.config import Settings
 
     monkeypatch.setenv("OPERATIONAL_API_KEY", "")
     with pytest.raises(ValidationError):

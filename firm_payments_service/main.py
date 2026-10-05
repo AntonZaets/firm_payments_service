@@ -1,23 +1,16 @@
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from secrets import compare_digest
-from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.security import APIKeyHeader
-from prometheus_fastapi_instrumentator import Instrumentator, metrics
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import FastAPI, Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
 
-from firm_payments_service.database import make_engine
-from firm_payments_service.logging_config import log_request
-from firm_payments_service.settings import Settings
+from firm_payments_service.api.health import router as health_router
+from firm_payments_service.db.session import engine
+from firm_payments_service.observability.logging import log_request
+from firm_payments_service.observability.metrics import register_metrics
 
-settings = Settings()
-engine = make_engine(settings)
 logger = logging.getLogger(__name__)
 
 
@@ -31,19 +24,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         logger.info("Application stopped")
 
 
-def require_operational_key(
-    key: Annotated[
-        str | None, Depends(APIKeyHeader(name="X-API-Key", auto_error=False))
-    ],
-) -> None:
-    if key is None or not compare_digest(
-        key.encode(), settings.operational_api_key.get_secret_value().encode()
-    ):
-        raise HTTPException(status_code=401, detail="Invalid API key")
-
-
 app = FastAPI(title="Firm Payments Service", lifespan=lifespan)
 app.middleware("http")(log_request)
+app.include_router(health_router)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -55,28 +38,4 @@ async def http_error(request: Request, exc: StarletteHTTPException) -> JSONRespo
     )
 
 
-# The library leaves custom_labels untyped.
-Instrumentator().add(metrics.default()).add(  # pyright: ignore[reportUnknownMemberType]
-    metrics.latency(  # pyright: ignore[reportUnknownMemberType]
-        metric_name="http_request_duration_by_status_seconds"
-    )
-).instrument(app).expose(
-    app, include_in_schema=False, dependencies=[Depends(require_operational_key)]
-)
-
-
-@app.get("/health/live", dependencies=[Depends(require_operational_key)])
-def liveness() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-@app.get("/health/ready", dependencies=[Depends(require_operational_key)])
-def readiness(request: Request, response: Response) -> dict[str, str]:
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-    except SQLAlchemyError:
-        logger.warning("Database readiness check failed")
-        response.status_code = 503
-        return {"status": "unavailable", "request_id": request.state.request_id}
-    return {"status": "ok"}
+register_metrics(app)
