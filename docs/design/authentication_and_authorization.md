@@ -1,11 +1,15 @@
 # Authentication and authorization
 
-Status: confirmed; issuer and audience are supplied through deployment configuration.
+Status: deferred from the current payment implementation phase.
 
 ## Overview
 
 This document defines how payment requests are authenticated and authorized,
 including JWT validation, the authentication opt-out, and operational endpoint protection.
+
+The current implementation intentionally skips payment authentication and
+authorization. Operational endpoints continue to require the static API key. The
+rules below describe the deferred payment-auth design to implement later.
 
 ## Decisions
 

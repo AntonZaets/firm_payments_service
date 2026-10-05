@@ -2,9 +2,11 @@
 
 Local development scaffold for the service described in
 [requirements](docs/requirements.md) and [technology stack](docs/tech_stack.md).
-Payment processing, platform tables, and application authorization are not
-implemented yet. Only operational endpoints exist; the API is published on
-localhost and PostgreSQL is accessible only inside Docker Compose.
+Bulk payment processing is implemented against the platform-owned `firms` and
+`payments` tables, with a service-owned audit table. Application authentication
+and authorization are deferred; operational endpoints still require the static
+API key. The API is published on localhost and PostgreSQL is accessible only
+inside Docker Compose.
 
 ## Prerequisites
 
@@ -62,7 +64,8 @@ Source changes reload the running application. Dependency or image changes need
 | `make migration MESSAGE="description"` | Generate a migration from metadata |
 
 Tests cover health endpoints, PostgreSQL connectivity, readiness failures,
-metrics, and JSON logging. Coverage prints in the terminal. To run a subset:
+metrics, payment validation and processing, and JSON logging. Coverage prints
+in the terminal. To run a subset:
 
 ```sh
 docker compose run --rm app uv run --locked python -m pytest tests/unit
@@ -108,13 +111,14 @@ them, update both the `POSTGRES_*` variables and `DATABASE_URL`. PostgreSQL uses
 the initialization credentials only when its data volume is empty; changing
 `.env` does not change an existing database user's password.
 
-Alembic is wired to the shared settings and empty SQLAlchemy metadata. No firms
-or payments tables are created yet. When adding models, register their tables in
-the metadata used by the migration environment, generate a revision, review it,
-and apply it:
+Alembic is wired to the shared settings and SQLAlchemy metadata for
+service-owned tables. Migrations create `firm_payments_audit`; the platform
+owns `firms` and `payments`, so this service does not migrate them. When adding
+service-owned models, register their tables in the metadata used by the migration
+environment, generate a revision, review it, and apply it:
 
 ```sh
-make migration MESSAGE="create platform tables"
+make migration MESSAGE="create audit table"
 make migrate
 ```
 

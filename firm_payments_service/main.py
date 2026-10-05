@@ -7,6 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
 
 from firm_payments_service.api.health import router as health_router
+from firm_payments_service.api.routes import router as payments_router
 from firm_payments_service.db.session import engine
 from firm_payments_service.observability.logging import log_request
 from firm_payments_service.observability.metrics import register_metrics
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 app = FastAPI(title="Firm Payments Service", lifespan=lifespan)
 app.middleware("http")(log_request)
 app.include_router(health_router)
+app.include_router(payments_router)
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -1,9 +1,11 @@
 from alembic import context
 
+import firm_payments_service.db.models
 from firm_payments_service.config import Settings
 from firm_payments_service.db.session import make_engine, metadata
 
 settings = Settings()
+_ = firm_payments_service.db.models
 
 if context.is_offline_mode():
     context.configure(

@@ -40,8 +40,7 @@ make check
 
 `make check` can modify files. Stage new files before running it so pre-commit can
 inspect them. Acceptance contracts are ordinary tests, not expected failures or skips;
-their failures show progress toward the documented behavior. Until payment handling
-is implemented, payment contracts fail because the endpoint is missing.
+their failures show regressions against the documented behavior.
 
 ## Functional database harness
 

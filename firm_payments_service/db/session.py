@@ -1,4 +1,5 @@
 from sqlalchemy import Engine, MetaData, create_engine
+from sqlalchemy.orm import Session
 
 from firm_payments_service.config import Settings
 
@@ -15,3 +16,7 @@ def make_engine(settings: Settings) -> Engine:
 
 
 engine = make_engine(Settings())
+
+
+def make_session() -> Session:
+    return Session(engine)

@@ -13,22 +13,17 @@ request schema and headers, response formats, and HTTP status mapping.
 - Return HTTP 201 with `{"request_id": "..."}` only after the payment transaction commits.
 - Generate a request ID in the service and return it for troubleshooting; it is for correlation, not deduplication.
 - Client-request idempotency is out of scope. Repeated HTTP submissions are separate transfers; no idempotency key or replay-protection storage is introduced.
-- Payment authentication and authorization follow [authentication and authorization](authentication_and_authorization.md). Operational endpoints are defined in [observability](observability.md).
+- Payment authentication and authorization are deferred in the current implementation. Operational endpoints are defined in [observability](observability.md) and remain API-key protected.
 
 ## Request headers
 
 | Header | Value | Required |
 | --- | --- | --- |
 | `Content-Type` | `application/json` | Yes. |
-| `Authorization` | `Bearer <JWT>` | When `AUTH_ENABLED=true` (the default). |
-
-When authentication is enabled, the JWT's `payer_firm_uuid` claim must match
-the request body's payer UUID, comparing both as parsed UUIDs. A missing or
-invalid token, including a missing or malformed payer claim, returns HTTP 401;
-a valid token with a different payer UUID returns HTTP 403. When
-`AUTH_ENABLED=false`, no token is required and token validation and payer
-authorization are skipped. Token verification rules are defined in
-[authentication and authorization](authentication_and_authorization.md).
+The payment endpoint currently requires no authorization header. JWT validation
+and payer authorization rules remain documented in
+[authentication and authorization](authentication_and_authorization.md), but are
+not part of this implementation phase.
 
 ## Request schema
 
@@ -109,5 +104,5 @@ Confirmed error set:
 
 ## Requirements
 
-FR-01–FR-06, NFR-01–NFR-04. Authentication and authorization are based on a
-[design assumption](assumptions.md#authentication-and-authorization).
+FR-01–FR-06, NFR-01–NFR-04. Authentication and authorization are deferred from
+this implementation phase.
