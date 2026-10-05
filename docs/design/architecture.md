@@ -97,3 +97,37 @@ and mappings in `db`, platform security in `auth`, and logging and metrics in
 ## Requirements
 
 FR-01–FR-07, NFR-01–NFR-04.
+
+## Functional test harness
+
+Payment contract tests use real PostgreSQL in a uniquely named disposable database
+on the configured server. The test owner needs CREATE DATABASE permission. Test-owned
+`firms`, `payments`, and `firm_payments_audit` tables mirror the documented schema;
+this harness does not validate production migrations. Platform money columns use
+PostgreSQL INTEGER ranges. UUID uniqueness and other unspecified platform constraints
+are intentionally absent, allowing tests of ambiguous UUID mappings.
+
+Fixtures seed committed Polyfactory data and truncate all three tables before and
+after every contract test, including failed tests. Application requests use independent
+connections and real commits; an outer rollback/savepoint would hide commit and
+concurrency behavior. The database is dropped after the suite. Payment authentication
+is explicitly disabled; JWT verification is outside this suite. Database triggers
+exercise payment/audit insertion failures, and independent clients synchronize
+concurrent requests with a thread barrier.
+
+Tests marked `just_contract` are stable acceptance contracts. `make test` runs
+all tests, including contracts, so failures track implementation progress. Automatic
+Stop hooks run `make test PYTEST_ARGS="-m 'not just_contract'"` to keep development
+checks independent of unfinished features. The marker is reusable across features.
+
+Run only acceptance contracts with:
+
+```sh
+make test PYTEST_ARGS="-m just_contract"
+```
+
+These are ordinary failing tests, not expected failures. Change contracts when
+requirements change or assertions are incorrect; implement service behavior to
+satisfy them. The PDF worked example preserves its three firms and three payments
+exactly. Generated cases cover validation, precision, conservation, audit, rollback,
+and concurrent balance updates.

@@ -1,5 +1,6 @@
 COMPOSE := docker compose
 UV ?= uv
+PYTEST_ARGS ?=
 
 .PHONY: help setup build up down logs test check format migrate migration
 
@@ -9,7 +10,7 @@ help:
 	@echo 'up        Build and start the app and PostgreSQL'
 	@echo 'down      Stop services (preserve database data)'
 	@echo 'logs      Follow service logs'
-	@echo 'test      Run tests with PostgreSQL and coverage'
+	@echo 'test      Run all tests with PostgreSQL and coverage (PYTEST_ARGS optional)'
 	@echo 'check     Run all pre-commit checks'
 	@echo 'format    Fix lint issues and format Python files'
 	@echo 'migrate   Apply database migrations'
@@ -34,7 +35,7 @@ logs:
 
 test:
 	$(COMPOSE) up --wait db
-	$(COMPOSE) run --build --rm -T app uv run --locked python -m pytest
+	$(COMPOSE) run --build --rm -T app uv run --locked python -m pytest $(PYTEST_ARGS)
 
 check:
 	$(COMPOSE) run --build --rm -T --no-deps --workdir /workspace app /app/.venv/bin/pre-commit run --all-files --show-diff-on-failure
