@@ -77,6 +77,7 @@ them. Host hooks use the same locked dependencies as the container.
 
 The repo's `.codex/hooks.json` runs `make check` after `apply_patch` edits and
 before Codex finishes each turn (`Stop`), covering shell-based edits at turn end.
+A separate `Stop` hook also runs `make test`.
 Checks run synchronously; failures return feedback so Codex can fix them and
 rerun checks. Ruff and whitespace hooks can modify files themselves.
 

@@ -3,3 +3,10 @@
 - Treat `docs/` as the source of truth for implementation. Start with [the documentation index](docs/index.md) and follow the requirements, technology stack, and design decisions.
 - If implementation reveals missing facts, rules, or decisions in the design, extend the relevant document in `docs/design/` as part of the change so the design describes the implemented behavior. Resolve any conflicts with documented requirements rather than silently overriding them.
 - Use Conventional Commits for all commit messages.
+
+# Automatic Codex hooks
+
+- The trusted project configuration in `.codex/hooks.json` runs `make check` after `apply_patch`, `Write`, and `Edit` tool calls (`PostToolUse`).
+- Before finishing each turn (`Stop`), hooks run `make check` and `make test`, including read-only turns. Failures return feedback and continue the turn; fix failures before finishing.
+- Docker must be running and accessible. Checks may modify files; new files must be added to Git for pre-commit to inspect them.
+- After changing hooks, restart Codex and review and trust the updated configuration through `/hooks`.
