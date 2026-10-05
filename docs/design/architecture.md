@@ -10,7 +10,7 @@ transaction flow, concurrency handling, and execution model.
 ## Structure and responsibilities
 
 - Use one FastAPI application with the bulk-payment endpoint defined in [API](api.md).
-- Keep request schemas and validation at the API boundary. Validate nonempty payment lists in request schemas; the payment service prohibits self-payments before database writes.
+- Keep request schemas and validation at the API boundary. Validate nonempty payment lists and prohibit self-payments in request schemas before calling the payment service.
 - Register a FastAPI validation exception handler so framework and service validation share the [API error format](api.md#validation-error-response).
 - The payment service owns transfer rules and scopes each attempt with `make_session`. This context manager accepts optional keyword arguments for isolation level, statement timeout, and lock timeout; it applies transaction-local setup, commits on success, rolls back on failure, and always closes the session. Omitted arguments preserve database defaults. Repositories share this session and do not commit independently.
 - Use a repository layer for SQLAlchemy queries, UUID lookup, balance updates, payment insertion, and audit insertion.
@@ -49,9 +49,9 @@ tests/
 └── functional/        # API, PostgreSQL rollback and concurrent-transfer checks.
 ```
 
-The request flow is `api → service → repository → database`. The API obtains
-a request-scoped session; the service uses it to own one transaction, and the
-repository uses that same session without committing. ORM models stay internal;
+The request flow is `api → service → repository → database`. The service creates
+a session and owns one transaction per attempt; the repository uses that same
+session without committing. ORM models stay internal;
 the API returns response schemas. See [authentication and authorization](authentication_and_authorization.md), [observability](observability.md), and
 the [API contract](api.md) for their respective decisions.
 
