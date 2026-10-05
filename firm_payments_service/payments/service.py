@@ -3,10 +3,9 @@ from collections import defaultdict
 from typing import Any
 
 from sqlalchemy import text
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, NoResultFound
 
 from firm_payments_service.api.schemas import (
-    INTEGER_MAX,
     BulkPayment,
     Error,
     InvalidRequest,
@@ -48,9 +47,9 @@ def _attempt(
                     *(payment.payee_firm_uuid for payment in request.payments),
                 },
             )
-            resolved: dict[str, list[tuple[int, int]]] = defaultdict(list)
+            resolved: dict[str, list[int]] = defaultdict(list)
             for row in rows:
-                resolved[str(row.uuid).lower()].append((row.id, row.balance_cents))
+                resolved[str(row.uuid).lower()].append(row.id)
             if any(
                 len(resolved[uuid]) != 1
                 for uuid in {
@@ -66,11 +65,15 @@ def _attempt(
                         )
                     ]
                 )
-            ids = {uuid: values[0][0] for uuid, values in resolved.items()}
-            balances = {values[0][0]: values[0][1] for values in resolved.values()}
+            ids = {uuid: values[0] for uuid, values in resolved.items()}
             payer_id = ids[request.payer_firm_uuid]
             total = sum(payment.amount_cents for payment in request.payments)
-            if balances[payer_id] < total:
+            changes: dict[int, int] = defaultdict(int, {payer_id: -total})
+            for payment in request.payments:
+                changes[ids[payment.payee_firm_uuid]] += payment.amount_cents
+            try:
+                repository.update_balances(session, changes.items())
+            except NoResultFound as error:
                 raise InvalidRequest(
                     [
                         Error(
@@ -78,17 +81,10 @@ def _attempt(
                             "Payer balance is below the payment total.",
                         )
                     ]
-                )
-            changes: dict[int, int] = defaultdict(int, {payer_id: -total})
-            for payment in request.payments:
-                changes[ids[payment.payee_firm_uuid]] += payment.amount_cents
-            updated = [
-                (firm_id, balances[firm_id] + change)
-                for firm_id, change in changes.items()
-            ]
-            if any(
-                not -INTEGER_MAX - 1 <= balance <= INTEGER_MAX for _, balance in updated
-            ):
+                ) from error
+            except DBAPIError as error:
+                if getattr(error.orig, "sqlstate", None) != "22003":
+                    raise
                 raise InvalidRequest(
                     [
                         Error(
@@ -96,8 +92,7 @@ def _attempt(
                             "A resulting balance exceeds the supported range.",
                         )
                     ]
-                )
-            repository.update_balances(session, updated)
+                ) from error
             repository.insert_payments(session, payer_id, ids, request.payments)
             repository.insert_audit(session, request_id, raw_request)
             session.commit()

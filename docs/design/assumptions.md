@@ -37,7 +37,7 @@ Source: user-supplied capacity-planning assumptions; these are estimates, not ve
 ## Platform constraints, indexes, and schema changes
 
 - Assume no additional permission to change platform tables. Any future constraint or index changes require platform approval; migrations remain limited to service-owned schema.
-- Treat existing constraints and indexes as unknown. Stored balances are guaranteed to be valid nonnegative integers; trust them without revalidation. Validate request data and calculated balances within the transaction.
+- Treat existing constraints and indexes as unknown. Stored balances are guaranteed to be valid nonnegative integers; trust them without revalidation. Validate request data and let PostgreSQL enforce the range of balances calculated in SQL within the transaction.
 - During integration, inspect the actual schema, integer ranges, constraints, and indexes. Confirm lookup performance and any permitted future schema changes with the platform owner.
 
 ## Other balance writers

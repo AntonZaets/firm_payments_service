@@ -15,7 +15,7 @@ represents money, and defines the service-owned audit schema and permissions.
 - Resolve public UUIDs to internal IDs before inserting payments.
 - Store and calculate money as integer cents. Validate the dollar-string format before exact conversion; never use floating point.
 - Stored platform data is valid: `balance_cents` contains nonnegative integers, never null (confirmed). Trust this guarantee without revalidating stored balances or adding platform constraints. Specific database constraints remain unspecified; do not introduce platform schema changes without platform approval.
-- Validate incoming monetary values and calculated balances against the actual database integer ranges. Funds validation and credits preserve nonnegative balances; see [architecture](architecture.md#payment-transaction).
+- Validate incoming monetary values against the actual database integer ranges. Calculate resulting balances only in SQL and let PostgreSQL enforce their integer range. Funds validation and credits preserve nonnegative balances; see [architecture](architecture.md#payment-transaction).
 - Transaction-level validation, firm resolution, and balance updates are defined in [architecture](architecture.md#payment-transaction). Client submission and idempotency behavior are defined in [API](api.md#payment-endpoint).
 
 ## Audit table

@@ -63,10 +63,10 @@ and mappings in `db`, platform security in `auth`, and logging and metrics in
 ## Payment transaction
 
 1. Use one PostgreSQL transaction per bulk request at SERIALIZABLE isolation, set before any transaction queries execute.
-2. Resolve all payer and recipient UUIDs and read their balances within the transaction. Each supplied UUID must resolve to exactly one firm with an internal ID; reject missing or ambiguous mappings rather than choosing an arbitrary row.
-3. Trust stored balances as valid, nonnegative integer cents; do not revalidate stored data. Validate positive payment amounts, batch totals, and resulting balances against the actual database integer ranges; see [data model](data-model.md).
-4. Require `balance_cents >= total_cents` for the payer, including equality. Resolve payer existence independently of funds: do not filter lookup by `balance_cents > 0`. A zero payer balance yields insufficient funds for a positive batch; a successful debit cannot leave the payer negative.
-5. Credit recipients by their payment totals. Existing balances are nonnegative by the platform guarantee; check calculated balances for overflow before writing.
+2. Resolve all payer and recipient UUIDs to internal IDs within the transaction without reading balances into Python. Each supplied UUID must resolve to exactly one firm; reject missing or ambiguous mappings rather than choosing an arbitrary row.
+3. Trust stored balances as valid, nonnegative integer cents; do not revalidate stored data. Validate positive payment amounts and batch totals against the actual database integer ranges; PostgreSQL enforces the range of resulting balances during updates. See [data model](data-model.md).
+4. Require `balance_cents >= total_cents` for the payer, including equality, in the debit UPDATE's WHERE clause. Use `RETURNING id` to require an updated row; no returned row raises `NoResultFound`, mapped to `INSUFFICIENT_FUNDS` with full rollback. Resolve payer existence independently of funds: do not filter UUID lookup by balance. A zero payer balance yields insufficient funds for a positive batch; a successful debit cannot leave the payer negative. Credits do not require a balance predicate.
+5. Apply balance changes with SQL arithmetic on stored balances; never calculate resulting balances in Python. PostgreSQL rejects out-of-range results. Map numeric overflow (`SQLSTATE 22003`) during balance updates to `INVALID_AMOUNT` and roll back the entire transaction.
 6. Aggregate credits per recipient for balance updates, while inserting one payment row per input entry, including repeated recipients and their separate descriptions. Apply debit and credits in ascending internal firm-ID order to reduce deadlock risk.
 7. Insert one audit row per successful bulk request through the repository in the same transaction as payments and balance updates. The [data model](data-model.md#audit-table) defines the audit schema.
 8. Commit before returning success. Roll back the entire transaction on any failure, including audit insertion failure; rejected or rolled-back transfers leave no balance changes, payment rows, or audit row.
@@ -83,7 +83,7 @@ and mappings in `db`, platform security in `auth`, and logging and metrics in
 
 ### Alternatives considered
 
-- A conditional payer debit is compact, but transfers involving several shared firms still require careful credit updates and lock ordering.
+- A conditional payer debit enforces funds in SQL; ordered updates and SERIALIZABLE isolation also protect transfers involving several shared firms.
 - READ COMMITTED with explicit row locks is an alternative; SERIALIZABLE is the selected isolation level.
 - In-process locks cannot coordinate multiple service instances.
 

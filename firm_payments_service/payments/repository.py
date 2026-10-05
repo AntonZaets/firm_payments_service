@@ -11,20 +11,23 @@ from firm_payments_service.api.schemas import Payment
 def find_firms(session: Session, uuids: set[str]) -> list[Row[Any]]:
     return list(
         session.execute(
-            text(
-                "SELECT id, uuid, balance_cents FROM firms WHERE lower(uuid) IN :uuids"
-            ).bindparams(bindparam("uuids", expanding=True)),
+            text("SELECT id, uuid FROM firms WHERE lower(uuid) IN :uuids").bindparams(
+                bindparam("uuids", expanding=True)
+            ),
             {"uuids": tuple(uuids)},
         )
     )
 
 
-def update_balances(session: Session, balances: Iterable[tuple[int, int]]) -> None:
-    for firm_id, balance in sorted(balances):
+def update_balances(session: Session, changes: Iterable[tuple[int, int]]) -> None:
+    for firm_id, change in sorted(changes):
         session.execute(
-            text("UPDATE firms SET balance_cents=:balance WHERE id=:id"),
-            {"id": firm_id, "balance": balance},
-        )
+            text(
+                "UPDATE firms SET balance_cents=balance_cents+:change WHERE id=:id "
+                "AND (:change >= 0 OR balance_cents >= -:change) RETURNING id"
+            ),
+            {"id": firm_id, "change": change},
+        ).scalar_one()
 
 
 def insert_payments(
