@@ -33,9 +33,6 @@ services:
       - ./pyproject.toml:/app/pyproject.toml:ro
       - ./uv.lock:/app/uv.lock:ro
       - ./alembic.ini:/app/alembic.ini:ro
-      - ./.pre-commit-config.yaml:/app/.pre-commit-config.yaml:ro
-      - ./:/workspace
-      - pre_commit_cache:/root/.cache/pre-commit
     healthcheck:
       test: [CMD, /app/.venv/bin/python, -c, "import os, urllib.request; request = urllib.request.Request('http://localhost:8000/health/ready', headers={'X-API-Key': os.environ['OPERATIONAL_API_KEY']}); urllib.request.urlopen(request, timeout=5)"]
       interval: 2s
@@ -44,4 +41,3 @@ services:
 
 volumes:
   postgres_data:
-  pre_commit_cache:
