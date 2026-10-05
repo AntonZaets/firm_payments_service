@@ -13,11 +13,31 @@ services:
       timeout: 3s
       retries: 30
 
+  dex:
+    image: ghcr.io/dexidp/dex:v2.45.1
+    command: [dex, serve, /etc/dex/config.yaml]
+    volumes:
+      - ./local/dex.yaml:/etc/dex/config.yaml:ro
+    ports:
+      - "127.0.0.1:5556:5556"
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://localhost:5556/dex/.well-known/openid-configuration"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   app:
     build: .
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://firm_payments:local-development@db:5432/firm_payments}
       OPERATIONAL_API_KEY: ${OPERATIONAL_API_KEY:-local-operational-key}
+      AUTH_ENABLED: ${AUTH_ENABLED:-true}
+      AUTH_ISSUER: ${AUTH_ISSUER:-http://localhost:5556/dex}
+      AUTH_AUDIENCE: ${AUTH_AUDIENCE:-firm-payments}
+      AUTH_JWKS_URL: ${AUTH_JWKS_URL:-http://dex:5556/dex/keys}
+      AUTH_JWKS_TIMEOUT_SECONDS: ${AUTH_JWKS_TIMEOUT_SECONDS:-30}
+      AUTH_TOKEN_PROFILE: ${AUTH_TOKEN_PROFILE:-dex}
+      AUTH_ALLOW_HTTP: ${AUTH_ALLOW_HTTP:-true}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       RELOAD: "true"
       UV_PROJECT_ENVIRONMENT: /app/.venv
@@ -25,6 +45,8 @@ services:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
     depends_on:
       db:
+        condition: service_healthy
+      dex:
         condition: service_healthy
     volumes:
       - ./firm_payments_service:/app/firm_payments_service

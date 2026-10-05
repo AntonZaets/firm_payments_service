@@ -3,10 +3,9 @@
 Local development scaffold for the service described in
 [requirements](docs/requirements.md) and [technology stack](docs/tech_stack.md).
 Bulk payment processing is implemented against the platform-owned `firms` and
-`payments` tables, with a service-owned audit table. Application authentication
-and authorization are deferred; operational endpoints still require the static
-API key. The API is published on localhost and PostgreSQL is accessible only
-inside Docker Compose.
+`payments` tables, with a service-owned audit table. Payment requests require bearer JWT authentication and payer authorization
+by default; operational endpoints require the separate static API key. The API is published on localhost and PostgreSQL is accessible only
+inside Docker Compose. Local authentication uses Dex, published on loopback port 5556.
 
 ## Prerequisites
 
@@ -47,6 +46,44 @@ curl --fail -H "X-API-Key: local-operational-key" http://127.0.0.1:8000/health/r
 Source changes reload the running application. Dependency or image changes need
 `make build` followed by `make up`. JSON application and Uvicorn logs go to stdout.
 
+## Local authentication
+
+Compose starts Dex with two local users, both with password `password`:
+
+| User | Authorized payer firm UUID |
+| --- | --- |
+| `payer@example.test` | `3f1c9a2e-7b4d-4c1e-9a55-2d8e6f0b7c41` |
+| `other@example.test` | `8b2e4c71-0d3a-4f6e-b1c9-5a7d2e9f4c10` |
+
+Obtain a token and submit a payment request (the platform firms must already exist):
+
+```sh
+TOKEN=$(curl --fail --silent \
+  -u firm-payments:local-payment-client-secret \
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode 'username=payer@example.test' \
+  --data-urlencode 'password=password' \
+  --data-urlencode 'scope=openid federated:id' \
+  http://localhost:5556/dex/token | python3 -c 'import json, sys; print(json.load(sys.stdin)["id_token"])')
+curl --fail -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  --data @payment.json http://localhost:8000/api/v1/payments/bulk
+```
+
+Use the `id_token`; Dex's OAuth access token is opaque. Dex uses memory storage,
+so restarting it invalidates previously issued tokens. Its password flow and
+published credentials are for local development only.
+
+Direct/deployed execution defaults to `AUTH_TOKEN_PROFILE=standard` (ES256 and
+`payer_firm_uuid`), `AUTH_ENABLED=true`, and HTTPS JWKS URLs. Supply
+`AUTH_ISSUER`, `AUTH_AUDIENCE`, and `AUTH_JWKS_URL`; incomplete enabled settings
+prevent startup. `AUTH_JWKS_TIMEOUT_SECONDS` defaults to 30; keys are fetched
+for every request without caching. Compose explicitly uses the `dex` profile
+(RS256 and `federated_claims.user_id` from connector `local`) and
+`AUTH_ALLOW_HTTP=true` for local networking. Keep HTTP permission disabled in
+deployments and provide HTTPS ingress. `AUTH_ENABLED=false` explicitly skips
+payment authentication and authorization; it does not disable operational keys.
+
 ## Development commands
 
 | Command | Purpose |
@@ -57,7 +94,7 @@ Source changes reload the running application. Dependency or image changes need
 | `make up` | Build and start services; wait for readiness |
 | `make down` | Stop services, preserving the database volume |
 | `make logs` | Follow service logs; Ctrl-C stops following |
-| `make test` | Start PostgreSQL and run pytest with coverage |
+| `make test` | Start PostgreSQL and Dex and run pytest with coverage |
 | `make check` | Run every pre-commit hook against all tracked files on the host |
 | `make format` | Apply Ruff fixes and formatting on the host |
 | `make migrate` | Apply Alembic migrations |

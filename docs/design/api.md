@@ -13,17 +13,20 @@ request schema and headers, response formats, and HTTP status mapping.
 - Return HTTP 201 with `{"request_id": "..."}` only after the payment transaction commits.
 - Generate a request ID in the service and return it for troubleshooting; it is for correlation, not deduplication.
 - Client-request idempotency is out of scope. Repeated HTTP submissions are separate transfers; no idempotency key or replay-protection storage is introduced.
-- Payment authentication and authorization are deferred in the current implementation. Operational endpoints are defined in [observability](observability.md) and remain API-key protected.
+- Payment requests require bearer authentication and payer authorization unless `AUTH_ENABLED=false`. Operational endpoints are defined in [observability](observability.md) and remain API-key protected.
 
 ## Request headers
 
 | Header | Value | Required |
 | --- | --- | --- |
 | `Content-Type` | `application/json` | Yes. |
-The payment endpoint currently requires no authorization header. JWT validation
-and payer authorization rules remain documented in
-[authentication and authorization](authentication_and_authorization.md), but are
-not part of this implementation phase.
+| `Authorization` | `Bearer <JWT>` | When `AUTH_ENABLED=true` (the default). |
+
+JWT validation and payer authorization follow
+[authentication and authorization](authentication_and_authorization.md).
+Missing or invalid tokens return HTTP 401 with `WWW-Authenticate: Bearer`;
+a valid token for a different payer returns HTTP 403. Both responses contain
+`request_id` and a generic `detail` and leave the database unchanged.
 
 ## Request schema
 
@@ -104,5 +107,5 @@ Confirmed error set:
 
 ## Requirements
 
-FR-01–FR-06, NFR-01–NFR-04. Authentication and authorization are deferred from
-this implementation phase.
+FR-01–FR-06, NFR-01–NFR-04. Authentication and authorization follow the confirmed
+service design.

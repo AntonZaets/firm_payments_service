@@ -22,7 +22,7 @@ must preserve the entire prior database state, including existing payment and au
 
 ## Running tests
 
-Docker must be running and accessible. Test commands start PostgreSQL and build the app
+Docker must be running and accessible. Test commands start PostgreSQL and Dex and build the app
 image automatically. Coverage is enabled through pytest configuration.
 
 ```sh
@@ -60,8 +60,16 @@ are intentionally absent, allowing tests of ambiguous UUID mappings.
 Fixtures seed committed Polyfactory data and truncate all three tables before and
 after every contract test, including failed tests. Application requests use independent
 connections and real commits; an outer rollback/savepoint would hide commit and
-concurrency behavior. The database is dropped after the suite. Payment authentication
-is explicitly disabled; JWT verification is outside this suite. Database triggers
+concurrency behavior. The database is dropped after the suite. Existing payment contract fixtures explicitly disable payment authentication.
+New authentication contracts must reuse those database/client fixtures, explicitly
+enable the Dex profile, and use real Dex-issued ID tokens for authentication and
+payer authorization. Compare the entire database state on rejection, including
+existing payments and audit rows. Test expiration by advancing only the verifier's
+clock past a real token's expiration, retaining signature verification without a
+long sleep. Adding these contracts requires the approval described below.
+Unit tests verify standard ES256 tokens, malformed claims, key-fetch failures,
+configuration defaults and profile isolation. Operational key checks remain
+independent of payment authentication. Database triggers
 exercise payment/audit insertion failures, and independent clients synchronize
 concurrent requests with a thread barrier.
 

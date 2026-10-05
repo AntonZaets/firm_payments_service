@@ -1,12 +1,14 @@
 import logging
 from json import JSONDecodeError
-from typing import Any, cast
+from typing import Annotated, Any, cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import JSONResponse
 
 from firm_payments_service.api.schemas import Error, InvalidRequest, validate_request
+from firm_payments_service.auth import authenticate_payment, authorize_payer
 from firm_payments_service.config import Settings
 from firm_payments_service.observability.metrics import (
     payment_batch_size,
@@ -20,7 +22,10 @@ router = APIRouter(prefix="/api/v1/payments")
 settings = Settings()
 
 
-async def payment_body(request: Request) -> tuple[Any, dict[str, Any] | None]:
+async def payment_body(
+    request: Request,
+    identity: Annotated[UUID | None, Depends(authenticate_payment)],
+) -> tuple[Any, dict[str, Any] | None]:
     try:
         body = await request.json()
     except JSONDecodeError:
@@ -38,7 +43,9 @@ def _errors(request_id: str, errors: list[Error]) -> JSONResponse:
 
 @router.post("/bulk", status_code=201)
 def bulk_payment(
-    request: Request, body: tuple[Any, dict[str, Any] | None] = Depends(payment_body)
+    request: Request,
+    body: tuple[Any, dict[str, Any] | None] = Depends(payment_body),
+    identity: Annotated[UUID | None, Depends(authenticate_payment)] = None,
 ) -> JSONResponse:
     value, raw = body
     if raw is None and value is None:
@@ -49,6 +56,7 @@ def bulk_payment(
         payment = validate_request(value, settings)
         if raw is None:
             raise RuntimeError("validated request body is not an object")
+        authorize_payer(identity, payment.payer_firm_uuid)
         payment_batch_size.observe(len(payment.payments))
         transfer(payment, raw, request.state.request_id, settings)
     except InvalidRequest as error:

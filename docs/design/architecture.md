@@ -26,7 +26,6 @@ firm_payments_service/
 │   ├── __init__.py
 │   ├── routes.py      # Sync payment endpoints, capture raw JSON/request ID, HTTP error mapping.
 │   ├── schemas.py     # Request/response schemas and exact dollar-to-cent validation.
-│   ├── dependencies.py # Request-scoped session and authenticated caller injection.
 │   └── health.py      # Liveness and readiness endpoints.
 ├── payments/
 │   ├── __init__.py
@@ -37,7 +36,7 @@ firm_payments_service/
 │   ├── session.py     # SQLAlchemy engine and session factory.
 │   └── models.py      # Platform firms/payments mappings and service-owned audit model.
 ├── auth/
-│   └──__init__.py
+│   └── __init__.py    # JWT verification, payer authorization and operational key checks.
 └── observability/
     ├── __init__.py
     ├── logging.py     # JSON log configuration and request correlation.
@@ -49,8 +48,10 @@ tests/
 └── functional/        # API, PostgreSQL rollback and concurrent-transfer checks.
 ```
 
-The request flow is `api → service → repository → database`. The service creates
-a session and owns one transaction per attempt; the repository uses that same
+The request flow is `api → auth → service → repository → database`.
+A shared synchronous API dependency verifies the caller before body parsing;
+the route validates the body and authorizes the payer before calling the service.
+The service creates a session and owns one transaction per attempt; the repository uses that same
 session without committing. ORM models stay internal;
 the API returns response schemas. See [authentication and authorization](authentication_and_authorization.md), [observability](observability.md), and
 the [API contract](api.md) for their respective decisions.

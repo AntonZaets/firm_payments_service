@@ -1,0 +1,31 @@
+# Local development only. Both users have password "password".
+issuer: http://localhost:5556/dex
+storage:
+  type: memory
+web:
+  http: 0.0.0.0:5556
+staticClients:
+  - id: firm-payments
+    secret: local-payment-client-secret
+    name: Firm Payments
+    redirectURIs:
+      - http://localhost:8000/docs/oauth2-redirect
+  - id: other-client
+    secret: local-other-client-secret
+    name: Wrong audience test client
+    redirectURIs:
+      - http://localhost:8000/docs/oauth2-redirect
+enablePasswordDB: true
+oauth2:
+  passwordConnector: local
+  grantTypes:
+    - password
+staticPasswords:
+  - email: payer@example.test
+    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+    username: payer
+    userID: 3f1c9a2e-7b4d-4c1e-9a55-2d8e6f0b7c41
+  - email: other@example.test
+    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+    username: other
+    userID: 8b2e4c71-0d3a-4f6e-b1c9-5a7d2e9f4c10

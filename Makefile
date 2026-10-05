@@ -7,10 +7,10 @@ PYTEST_ARGS ?=
 help:
 	@echo 'setup     Install host dependencies and Git hooks'
 	@echo 'build     Build the development image'
-	@echo 'up        Build and start the app and PostgreSQL'
+	@echo 'up        Build and start the app, PostgreSQL and Dex'
 	@echo 'down      Stop services (preserve database data)'
 	@echo 'logs      Follow service logs'
-	@echo 'test      Run all tests with PostgreSQL and coverage (PYTEST_ARGS optional)'
+	@echo 'test      Run all tests with PostgreSQL, Dex and coverage (PYTEST_ARGS optional)'
 	@echo 'check     Run all pre-commit checks'
 	@echo 'format    Fix lint issues and format Python files'
 	@echo 'migrate   Apply database migrations'
@@ -34,7 +34,7 @@ logs:
 	$(COMPOSE) logs --follow
 
 test:
-	$(COMPOSE) up --wait db
+	$(COMPOSE) up --wait db dex
 	$(COMPOSE) run --build --rm -T app uv run --locked python -m pytest $(PYTEST_ARGS)
 
 check:

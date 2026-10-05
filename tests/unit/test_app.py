@@ -44,7 +44,7 @@ def test_payment_batch_size(monkeypatch: pytest.MonkeyPatch, outcome: str) -> No
         for name in ("count", "sum")
     }
     request = Request({"type": "http", "state": {"request_id": "test-request"}})
-    response = routes.bulk_payment(request, (body, body))
+    response = routes.bulk_payment(request, (body, body), None)
     assert (
         response.status_code
         == {"accepted": 201, "failed": 500, "invalid": 422}[outcome]

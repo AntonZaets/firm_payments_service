@@ -9,6 +9,9 @@ and deployment, identifying what must be validated before implementation or depl
 
 ## Local development checks
 
+Store auxiliary local-development configuration and assets under `local/`,
+including the Dex configuration at `local/dex.yaml`.
+
 `make check` and `make format` run on the host through `uv run --locked`.
 Pre-commit uses the host Git installation. Tests run in Docker with PostgreSQL;
 the application image does not need Git or pre-commit cache mounts.
