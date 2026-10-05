@@ -31,7 +31,7 @@ make up
 pre-commit hooks, and copies `.env.example` to `.env` if it does not already exist.
 Build and startup also
 work without setup, using Compose's local defaults. The host environment is for
-Git hooks; the application, checks, and tests run in containers.
+Git hooks, checks, and formatting; the application and tests run in containers.
 
 - API documentation: <http://127.0.0.1:8000/docs>
 - Liveness: <http://127.0.0.1:8000/health/live>
@@ -56,8 +56,8 @@ Source changes reload the running application. Dependency or image changes need
 | `make down` | Stop services, preserving the database volume |
 | `make logs` | Follow service logs; Ctrl-C stops following |
 | `make test` | Start PostgreSQL and run pytest with coverage |
-| `make check` | Run every pre-commit hook against all tracked files |
-| `make format` | Apply Ruff fixes and formatting |
+| `make check` | Run every pre-commit hook against all tracked files on the host |
+| `make format` | Apply Ruff fixes and formatting on the host |
 | `make migrate` | Apply Alembic migrations |
 | `make migration MESSAGE="description"` | Generate a migration from metadata |
 
@@ -83,7 +83,7 @@ rerun checks. Ruff and whitespace hooks can modify files themselves.
 
 Restart Codex after installing this configuration, trust the project, and use
 `/hooks` to review and trust the repo hooks. Docker must be running and accessible
-to Codex. These checks use the same container workflow as `make check`; new files
+to Codex for tests. Checks run on the host through `make check`; new files
 still need to be added to Git to be included. Read-only turns also run the final
 check.
 

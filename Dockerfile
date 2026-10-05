@@ -9,12 +9,8 @@ ENV UV_LINK_MODE=copy \
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && rm -rf /var/lib/apt/lists/* \
-    && git config --global --add safe.directory /workspace
 COPY firm_payments_service ./firm_payments_service
 COPY tests ./tests
 COPY db_migrations ./db_migrations
-COPY alembic.ini .pre-commit-config.yaml ./
+COPY alembic.ini ./
 CMD ["uv", "run", "--locked", "python", "-m", "firm_payments_service"]

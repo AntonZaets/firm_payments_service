@@ -7,6 +7,12 @@ Status: provisional; validate with the platform and deployment owners during int
 This document records working assumptions for capacity, platform integration,
 and deployment, identifying what must be validated before implementation or deployment.
 
+## Local development checks
+
+`make check` and `make format` run on the host through `uv run --locked`.
+Pre-commit uses the host Git installation. Tests run in Docker with PostgreSQL;
+the application image does not need Git or pre-commit cache mounts.
+
 ## Firm population and payment volume
 
 Source: user-supplied capacity-planning assumptions; these are estimates, not verified market statistics or measured platform traffic.

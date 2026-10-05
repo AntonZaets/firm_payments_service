@@ -37,11 +37,11 @@ test:
 	$(COMPOSE) run --build --rm -T app uv run --locked python -m pytest
 
 check:
-	$(COMPOSE) run --build --rm -T --no-deps --workdir /workspace app /app/.venv/bin/pre-commit run --all-files --show-diff-on-failure
+	$(UV) run --locked pre-commit run --all-files --show-diff-on-failure
 
 format:
-	$(COMPOSE) run --build --rm -T --no-deps --workdir /workspace app uv run --locked ruff check --fix .
-	$(COMPOSE) run --rm -T --no-deps --workdir /workspace app uv run --locked ruff format .
+	$(UV) run --locked ruff check --fix .
+	$(UV) run --locked ruff format .
 
 migrate:
 	$(COMPOSE) up --wait db
