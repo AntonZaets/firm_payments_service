@@ -12,3 +12,4 @@ Start with the requirements, then review the technology stack and design decisio
 | [Requirements](requirements.md) | Service scope, payment request format, platform tables, and functional and non-functional requirements. |
 | [Technology stack](tech_stack.md) | Language, runtime, persistence, development, and deployment tools. |
 | [Design decisions](design/index.md) | Assumptions, architecture, API, authentication and authorization, data model, and observability. |
+| [Testing](testing.md) | Test organization, PostgreSQL fixtures, execution commands, and contract editing approvals. |

@@ -1,0 +1,9 @@
+approval_policy = "on-request"
+approvals_reviewer = "user"
+default_permissions = "protect-contracts"
+
+[permissions.protect-contracts]
+extends = ":workspace"
+
+[permissions.protect-contracts.filesystem.":workspace_roots"]
+"tests/functional" = "read"

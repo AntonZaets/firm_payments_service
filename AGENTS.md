@@ -10,3 +10,8 @@
 - Before finishing each turn (`Stop`), hooks run `make check` and `make test PYTEST_ARGS="-m 'not just_contract'"`, including read-only turns. Failures return feedback and continue the turn; fix failures before finishing.
 - Docker must be running and accessible. Checks may modify files; new files must be added to Git for pre-commit to inspect them.
 - After changing hooks, restart Codex and review and trust the updated configuration through `/hooks`.
+
+# Testing
+
+- Follow [the testing approach and contract test protection rules](docs/testing.md)
+  when writing, running, or changing tests.
