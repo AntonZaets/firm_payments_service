@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 
 app = FastAPI(title="Firm Payments Service", lifespan=lifespan)
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 
 @app.get("/health/live")
@@ -42,8 +43,3 @@ def readiness(response: Response) -> dict[str, str]:
         response.status_code = 503
         return {"status": "unavailable"}
     return {"status": "ok"}
-
-
-@app.get("/metrics", include_in_schema=False)
-def metrics() -> Response:
-    return Response(generate_latest(), headers={"Content-Type": CONTENT_TYPE_LATEST})

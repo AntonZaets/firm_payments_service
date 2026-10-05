@@ -21,6 +21,15 @@ def test_liveness_and_metrics() -> None:
         assert metrics.status_code == 200
         assert "text/plain" in metrics.headers["content-type"]
         assert "python_info" in metrics.text
+        assert (
+            'http_requests_total{handler="/health/live",method="GET",status="2xx"}'
+            in metrics.text
+        )
+        assert (
+            'http_request_duration_seconds_count{handler="/health/live",method="GET"}'
+            in metrics.text
+        )
+        assert "/metrics" not in client.get("/openapi.json").json()["paths"]
 
 
 def test_readiness_failure(
