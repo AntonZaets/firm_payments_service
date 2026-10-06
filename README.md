@@ -121,6 +121,8 @@ each turn finishes. Human review remains part of accepting the changes.
 The [Codex workflow guide](docs/codex.md) explains the approach, automatic checks,
 hook setup, and contract-edit approval rules.
 
+The actual conversations with Codex used for making this project could be found in [docs/codex-sessions/](docs/codex-sessions/)
+
 
 ## Feedback
 
